@@ -1,6 +1,9 @@
 import numpy as np
 from .base import ClassificationDecider
 
+# from IPython.core.debugger import set_trace
+# import pdb
+
 
 class ProgressiveLearner:
     def __init__(
@@ -88,6 +91,7 @@ class ProgressiveLearner:
                 np.sum(np.array(transformer_voter_decider_split)[:2]),
                 transformer_voter_decider_split[2],
             ]
+            # pdb.set_trace()
             if np.sum(split) > 1:
                 return [np.random.choice(ra, int(len(ra) * p)) for p in split]
             else:

@@ -3,12 +3,14 @@ from .transformers import TreeClassificationTransformer
 from .voters import TreeClassificationVoter
 from .deciders import SimpleAverage
 
+from IPython.core.debugger import set_trace
+
 
 class LifelongClassificationForest:
     def __init__(self, n_estimators=100, kappa=None, frac_vote=0.33): #correction: from "finite_sample_correction = False" to "kappa = None", add frac_vote
         self.n_estimators = n_estimators
         self.frac_vote = frac_vote #correction: can set parameter
-        
+                
         self.pl = ProgressiveLearner(
             default_transformer_class=TreeClassificationTransformer,
             default_transformer_kwargs={},

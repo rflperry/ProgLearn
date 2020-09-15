@@ -53,7 +53,7 @@ class SimpleAverage(ClassificationDecider):
                 transformer = self.transformer_id_to_transformers[transformer_id][
                     bag_id
                 ]
-                X_transformed = transformer.transform(X)
+                X_transformed = transformer.transform(X) # X_transformed is an n-by-1 list: integer index of leaf node
                 voter = self.transformer_id_to_voters[transformer_id][bag_id]
                 vote = voter.vote(X_transformed)
                 vote_per_bag_id.append(vote)

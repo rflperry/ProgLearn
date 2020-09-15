@@ -98,11 +98,11 @@ class TreeClassificationVoter(BaseVoter):
             raise NotFittedError(msg % {"name": type(self).__name__})
 
         votes_per_example = []
-        for x in X:
-            if x in list(self.leaf_to_posterior.keys()):
+        for x in X: # inputs a leaf index, gives us the posterior (n samples, k classes, probability of each of those classes)
+            if x in list(self.leaf_to_posterior.keys()): #check if correct
                 votes_per_example.append(self.leaf_to_posterior[x])
             else:
-                votes_per_example.append(self.uniform_posterior)
+                votes_per_example.append(self.uniform_posterior) # when none of the vote data landed in that leaf
         return np.array(votes_per_example)
 
     def is_fitted(self):
