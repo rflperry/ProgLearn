@@ -39,7 +39,8 @@ class TreeClassificationVoter(BaseVoter):
             self.multilabel = True
             return self.fit_multilabel(X, y)
 
-        num_classes = len(np.unique(y))
+        num_classes = 2
+        # num_classes = len(np.unique(y))
         self.uniform_posterior = np.ones(num_classes) / num_classes
 
         self.leaf_to_posterior = {}
@@ -47,7 +48,8 @@ class TreeClassificationVoter(BaseVoter):
         for leaf_id in np.unique(X):
             idxs_in_leaf = np.where(X == leaf_id)[0]
             class_counts = [
-                len(np.where(y[idxs_in_leaf] == y_val)[0]) for y_val in np.unique(y)
+                # len(np.where(y[idxs_in_leaf] == y_val)[0]) for y_val in np.unique(y)
+                len(np.where(y[idxs_in_leaf] == y_val)[0]) for y_val in range(2)
             ]
             posteriors = np.nan_to_num(np.array(class_counts) / np.sum(class_counts))
           
@@ -103,6 +105,7 @@ class TreeClassificationVoter(BaseVoter):
                 votes_per_example.append(self.leaf_to_posterior[x])
             else:
                 votes_per_example.append(self.uniform_posterior) # when none of the vote data landed in that leaf
+        # print(np.shape(votes_per_example))
         return np.array(votes_per_example)
 
     def is_fitted(self):

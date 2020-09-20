@@ -33,7 +33,7 @@ class ProgressiveLearner:
         self.task_id_to_decider_class = {}
         self.task_id_to_decider_kwargs = {}
 
-        self.task_id_to_bag_id_to_voter_data_idx = {}
+        self.task_id_to_bag_id_to_voter_data_idx = {} # note
         self.task_id_to_decider_idx = {}
 
         self.default_transformer_class = default_transformer_class
@@ -58,6 +58,7 @@ class ProgressiveLearner:
             self.transformer_id_to_transformers[transformer_id] = [transformer]
 
     def _append_voter(self, transformer_id, task_id, voter):
+        # print(transformer_id)
         if task_id in list(self.task_id_to_transformer_id_to_voters.keys()):
             if transformer_id in list(
                 self.task_id_to_transformer_id_to_voters[task_id].keys()
@@ -232,12 +233,12 @@ class ProgressiveLearner:
                 voter_data_idx = np.delete(
                     range(len(X)), self.task_id_to_decider_idx[task_id]
                 )
+            voter_data_idx = voter_data_idx[range(int(len(voter_data_idx)/2))]    # changed
             self._append_voter(
                 transformer_id,
                 task_id,
                 voter_class(**voter_kwargs).fit(
-                    transformer.transform(X[voter_data_idx]), y[voter_data_idx]
-                ),
+                    transformer.transform(X[voter_data_idx]), y[voter_data_idx])
             )
 
     def set_decider(
@@ -436,11 +437,12 @@ class ProgressiveLearner:
             X, transformer_ids=transformer_ids
         )
 
-    def predict_proba(self, X, task_id, transformer_ids=None):
+    def predict_proba(self, X, task_id, transformer_ids=None, bag_ids=None): #
+        # print(self.get_transformer_ids())
         decider = self.task_id_to_decider[task_id]
         if isinstance(decider, ClassificationDecider):
             return self.task_id_to_decider[task_id].predict_proba(
-                X, transformer_ids=transformer_ids
+                X, transformer_ids=transformer_ids, bag_ids=None #
             )
         else:
             raise AttributeError(

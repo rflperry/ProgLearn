@@ -35,8 +35,8 @@ class LifelongClassificationForest:
     def predict(self, X, task_id, transformer_ids=None):
         return self.pl.predict(X, task_id, transformer_ids=transformer_ids)
 
-    def predict_proba(self, X, task_id, transformer_ids=None):
-        return self.pl.predict_proba(X, task_id, transformer_ids=transformer_ids)
+    def predict_proba(self, X, task_id, transformer_ids=None, bag_ids=None): #
+        return self.pl.predict_proba(X, task_id, transformer_ids=transformer_ids, bag_ids = None)
 
 
 class UncertaintyForest:
@@ -57,8 +57,8 @@ class UncertaintyForest:
     def predict(self, X):
         return self.lf.predict(X, 0)
 
-    def predict_proba(self, X):
-        return self.lf.predict_proba(X, 0)
+    def predict_proba(self, X, bag_ids): #added tr_ids
+        return self.lf.predict_proba(X, 0,bag_ids=bag_ids)
 
 
 class TransferForest:
