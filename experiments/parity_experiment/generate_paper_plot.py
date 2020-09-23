@@ -172,7 +172,7 @@ ax1.plot(ns[len(n1s):], mean_te[1, len(n1s):], label=algorithms[1], c=colors[0],
 ax1.plot(ns, mean_te[2], label=algorithms[2], c='g', ls=ls[0], lw=3)
 ax1.plot(ns[len(n1s):], mean_te[3, len(n1s):], label=algorithms[3], c='g', ls=ls[1], lw=3)
 
-ax1.set_ylabel('Forward/Backward \n Transfer Efficiency (FTE/BTE)', fontsize=fontsize)
+ax1.set_ylabel('Transfer Efficiency (FTE/BTE)', fontsize=fontsize)
 ax1.legend(loc='upper left', fontsize=20, frameon=False)
 #ax1.set_ylim(.99, 1.4)
 ax1.set_xlabel('Total Sample Size', fontsize=fontsize)
@@ -207,7 +207,7 @@ ax1.plot(ns[len(n1s):], mean_te[1, len(n1s):], label=algorithms[1], c=colors[0],
 ax1.plot(ns, mean_te[2], label=algorithms[2], c='g', ls=ls[0], lw=3)
 ax1.plot(ns[len(n1s):], mean_te[3, len(n1s):], label=algorithms[3], c='g', ls=ls[1], lw=3)
 
-ax1.set_ylabel('Forward/Backward \n Transfer Efficiency (FTE/BTE)', fontsize=fontsize)
+ax1.set_ylabel('Transfer Efficiency (FTE/BTE)', fontsize=fontsize)
 #ax1.legend(loc='upper left', fontsize=20, frameon=False)
 #ax1.set_ylim(.99, 1.4)
 ax1.set_xlabel('Total Sample Size', fontsize=fontsize)
