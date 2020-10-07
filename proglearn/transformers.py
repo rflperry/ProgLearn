@@ -109,8 +109,23 @@ class TreeClassificationTransformer(BaseTransformer):
         multi_output = True if type_of_target(y) == "multilabel-indicator" else False
         X, y = check_X_y(X, y, multi_output=multi_output)
 
+        print(self.kwargs)
+
         # define the ensemble
-        self.transformer = DecisionTreeClassifier(**self.kwargs).fit(X, y)
+        self.transformer = DecisionTreeClassifier(**self.kwargs, random_state = 42).fit(X, y)
+
+        n_nodes = self.transformer.tree_.node_count
+        children_left = self.transformer.tree_.children_left
+        children_right = self.transformer.tree_.children_right
+        feature = self.transformer.tree_.feature
+        threshold = self.transformer.tree_.threshold
+
+        print("random state, UF2 = 42")
+        print("n_nodes = {}".format(n_nodes))
+        print("children_left = {}".format(children_left))
+        print("children_right = {}".format(children_right))
+        print("feature = {}".format(feature))
+        print("threshold = {}".format(threshold))
 
         self._is_fitted = True
 

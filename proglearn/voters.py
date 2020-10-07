@@ -25,6 +25,7 @@ class TreeClassificationVoter(BaseVoter):
         """
 
         self.kappa = kappa #correction
+        print("kappa inside voters.py = {}".format(self.kappa))
         self._is_fitted = False
         self.multilabel = False
 

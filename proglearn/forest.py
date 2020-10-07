@@ -10,10 +10,12 @@ class LifelongClassificationForest:
     def __init__(self, n_estimators=100, kappa=None, frac_vote=0.33): #correction: from "finite_sample_correction = False" to "kappa = None", add frac_vote
         self.n_estimators = n_estimators
         self.frac_vote = frac_vote #correction: can set parameter
+        # self.random_state = random_state
                 
         self.pl = ProgressiveLearner(
             default_transformer_class=TreeClassificationTransformer,
             default_transformer_kwargs={},
+            # default_transformer_kwargs={"random_state": random_state},
             default_voter_class=TreeClassificationVoter,
             default_voter_kwargs={"kappa": kappa}, #correction: from "finite_sample_correction": finite_sample_correction to "kappa": kappa)
             default_decider_class=SimpleAverage,
@@ -27,7 +29,7 @@ class LifelongClassificationForest:
             X,
             y,
             task_id=task_id,
-            transformer_voter_decider_split = [1-self.frac_vote, self.frac_vote, 0],
+            transformer_voter_decider_split = [1-self.frac_vote, (self.frac_vote)/2, 0], #changed to frac_vote/2 so eval data is 2nd half
             num_transformers=self.n_estimators
         ) #correction: set transformer_voter_decider_split as [1-frac_vote, frac_vote, 0], defaults to [0.67, 0.33, 0]
         return self
@@ -40,16 +42,21 @@ class LifelongClassificationForest:
 
 
 class UncertaintyForest:
-    def __init__(self, n_estimators=100, kappa = None, frac_vote = 0.33): #correction: from "finite_sample_correction = False" to "kappa = None", add frac_vote
+    def __init__(self, n_estimators=100, kappa = None, frac_vote = 0.33, random_state = None): #correction: from "finite_sample_correction = False" to "kappa = None", add frac_vote
         self.n_estimators = n_estimators
         self.kappa = kappa #correction: from "self.finite_sample_correction = finite_sample_correction" to "self.kappa = kappa"
         self.frac_vote = frac_vote #correction: add frac_vote
+        # self.random_state = random_state
+
+        print(self.frac_vote)
+        # print(self.random_state)
 
     def fit(self, X, y):
         self.lf = LifelongClassificationForest(
             n_estimators=self.n_estimators,
             kappa=self.kappa, 
-            frac_vote=self.frac_vote
+            frac_vote=self.frac_vote,
+            # random_state = self.random_state
         ) #correction: from "finite_sample_correction = self.finite_sample_correction" to "kappa = self.kappa",set frac_vote
         self.lf.add_task(X, y, task_id=0)
         return self
