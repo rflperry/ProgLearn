@@ -13,6 +13,7 @@ from sklearn.utils.validation import (
 )
 
 import keras as keras
+import tensorflow as tf
 
 from .base import BaseTransformer
 
@@ -100,13 +101,32 @@ class NeuralClassificationTransformer(BaseTransformer):
         """
         #check_X_y(X, y)
         _, y = np.unique(y, return_inverse=True)
+        y = keras.utils.to_categorical(y)
 
         # more typechecking
         self.network.compile(
             loss=self.loss, optimizer=self.optimizer, **self.compile_kwargs
         )
 
-        self.network.fit(X, keras.utils.to_categorical(y), **self.fit_kwargs)
+        fit_kwargs = self.fit_kwargs.copy()
+        validation_split = fit_kwargs.pop('validation_split')
+        batch_size = fit_kwargs.pop('batch_size')
+
+        train_gen = tf.data.Dataset.from_generator(
+            lambda: minibatch(X, y, batch_size, validation_split),
+            output_signature=(
+                tf.TensorSpec(shape=(batch_size, *X.shape[1:])),
+                tf.TensorSpec(shape=(batch_size, y.shape[1])),
+            ))
+
+        valid_gen = tf.data.Dataset.from_generator(
+            lambda: minibatch(X, y, batch_size, validation_split, validation=True),
+            output_signature=(
+                tf.TensorSpec(shape=(batch_size, *X.shape[1:])),
+                tf.TensorSpec(shape=(batch_size, y.shape[1])),
+            ))
+
+        self.network.fit(train_gen, validation_data=valid_gen, **fit_kwargs)
 
         return self
 
@@ -194,3 +214,17 @@ class TreeClassificationTransformer(BaseTransformer):
         check_is_fitted(self)
         X = check_array(X)
         return self.transformer_.apply(X)
+
+def minibatch(X_train, y_train, batch_size, validation_split, validation=False):
+    n_tot = X_train.shape[0]
+    n_samp = int(n_tot * (1 - validation_split))
+    if validation:
+        n_samp = n_tot - n_samp
+    for _ in range(int(n_samp / batch_size)):
+        minibatch_indices = None
+        while minibatch_indices is None or min(np.unique(y_train[minibatch_indices], axis=0, return_counts=True)[1]) == 1:   
+            minibatch_indices = np.random.choice(n_samp, size=batch_size)
+            if validation:
+                minibatch_indices += (n_tot - n_samp)
+
+        yield X_train[minibatch_indices], y_train[minibatch_indices]

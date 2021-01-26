@@ -52,6 +52,38 @@ def get_size(obj, seen=None):
         size += sum([get_size(i, seen) for i in obj])'''
     return size
 
+# sum over samples in batch (anchors) ->
+# average over similar samples (positive) ->
+# of - log softmax positive / sum negatives (wrt cos similarity)
+# i.e. \sum_i -1/|P(i)| \sum_{p \in P(i)} log [exp(z_i @ z_p / t) / \sum_{n \in N(i)} exp(z_i @ z_n / t)]
+# = \sum_i [log[\sum_{n \in N(i)} exp(z_i @ z_n / t)] - 1/|P(i)| \sum_{p \in P(i)} log [exp(z_i @ z_p / t)]]
+def supervised_contrastive_loss(yTrue, yPred, temp=0.1):
+    r = yPred
+    y = yTrue
+    r, _ = tf.linalg.normalize(r, axis=1)
+
+    r_dists = tf.matmul(r, tf.transpose(r))
+    r_dists = tf.linalg.set_diag(
+        r_dists, tf.zeros(r_dists.shape[0], dtype=r_dists.dtype)
+    )  # exclude itself distance
+    r_dists = r_dists / temp
+
+    y_norms = tf.reduce_sum(y * y, 1)
+    y = y_norms - 2*tf.matmul(y, tf.transpose(y)) + tf.transpose(y_norms)
+
+    y = tf.cast(y / 2, r_dists.dtype)  # scale onehot distances to 0 and 1
+    negative_sum = tf.math.log(
+        tf.reduce_sum(y * tf.exp(r_dists), axis=1))  # y zeros diagonal 1's
+    positive_sum = (1 - y) * r_dists
+
+    n_nonzero = tf.math.reduce_sum(1-y, axis=1) - 1  # Subtract diagonal
+    positive_sum = tf.reduce_sum(
+        positive_sum, axis=1
+        ) / tf.cast(n_nonzero, positive_sum.dtype)
+    loss = tf.reduce_sum(negative_sum - positive_sum)
+
+    return loss
+
 #%%
 def LF_experiment(train_x, train_y, test_x, test_y, ntrees, shift, slot, model, num_points_per_task, acorn=None):
 
@@ -67,7 +99,7 @@ def LF_experiment(train_x, train_y, test_x, test_y, ntrees, shift, slot, model, 
     time_info = []
     mem_info = []
 
-    if model == "dnn":
+    if model == "dnn_contrast-4":
         default_transformer_class = NeuralClassificationTransformer
 
         network = keras.Sequential()
@@ -83,16 +115,21 @@ def LF_experiment(train_x, train_y, test_x, test_y, ntrees, shift, slot, model, 
 
         network.add(layers.Flatten())
         network.add(layers.BatchNormalization())
+
+        # Embedding layer w/ normalization to unit sphere
+        network.add(layers.Dense(2000))#, activation='relu'))
+        # network.add(layers.BatchNormalization())
+        network.add(layers.Lambda(lambda x: tf.linalg.normalize(x, axis=1)[0]))
         network.add(layers.Dense(2000, activation='relu'))
-        network.add(layers.BatchNormalization())
-        network.add(layers.Dense(2000, activation='relu'))
-        network.add(layers.BatchNormalization())
-        network.add(layers.Dense(units=10, activation = 'softmax'))
+        
+        # Projection head w/ normalization to unit sphere
+        network.add(layers.Dense(units=10))#, activation='relu'))
+        network.add(layers.Lambda(lambda x: tf.linalg.normalize(x, axis=1)[0]))
 
         default_transformer_kwargs = {
             "network": network,
-            "euclidean_layer_idx": -2,
-            "loss": "categorical_crossentropy",
+            "euclidean_layer_idx": -4,
+            "loss": supervised_contrastive_loss,
             "optimizer": Adam(3e-4),
             "fit_kwargs": {
                 "epochs": 100,
@@ -134,8 +171,8 @@ def LF_experiment(train_x, train_y, test_x, test_y, ntrees, shift, slot, model, 
         progressive_learner.add_task(
             X = train_x[task_ii*5000+slot*num_points_per_task:task_ii*5000+(slot+1)*num_points_per_task],
             y = train_y[task_ii*5000+slot*num_points_per_task:task_ii*5000+(slot+1)*num_points_per_task],
-            num_transformers = 1 if model == "dnn" else ntrees,
-            transformer_voter_decider_split = [0.63, 0.37, 0],
+            num_transformers = 1 if model == "dnn_contrast-4" else ntrees,
+            transformer_voter_decider_split = [0.67, 0.33, 0],
             decider_kwargs = {"classes" : np.unique(train_y[task_ii*5000+slot*num_points_per_task:task_ii*5000+(slot+1)*num_points_per_task])}
             )
         train_end_time = time.time()
@@ -152,7 +189,7 @@ def LF_experiment(train_x, train_y, test_x, test_y, ntrees, shift, slot, model, 
         single_learner.add_task(
             X = train_x[task_ii*5000+slot*num_points_per_task:task_ii*5000+(slot+1)*num_points_per_task],
             y = train_y[task_ii*5000+slot*num_points_per_task:task_ii*5000+(slot+1)*num_points_per_task],
-            num_transformers = 1 if model == "dnn" else ntrees,
+            num_transformers = 1 if model == "dnn_contrast-4" else ntrees,
             transformer_voter_decider_split = [0.67, 0.33, 0],
             decider_kwargs = {"classes" : np.unique(train_y[task_ii*5000+slot*num_points_per_task:task_ii*5000+(slot+1)*num_points_per_task])}
             )
@@ -202,10 +239,10 @@ def LF_experiment(train_x, train_y, test_x, test_y, ntrees, shift, slot, model, 
     df_single_task['train_times'] = train_times_across_tasks
 
     #print(df)
-    '''summary = (df,df_single_task)
-    file_to_save = 'result/result/fixed_'+model+str(ntrees)+str(shift)+'.pickle'
+    summary = (df,df_single_task)
+    file_to_save = 'result/result/'+model+str(ntrees)+'_'+str(shift)+'_'+str(slot)+'.pickle'
     with open(file_to_save, 'wb') as f:
-        pickle.dump(summary, f)'''
+        pickle.dump(summary, f)
 
     file_to_save = 'result/time_res/'+model+str(ntrees)+'_'+str(shift)+'_'+str(slot)+'.pickle'
     with open(file_to_save, 'wb') as f:
@@ -247,7 +284,7 @@ def cross_val_data(data_x, data_y, num_points_per_task, total_task=10, shift=1):
 def run_parallel_exp(data_x, data_y, n_trees, model, num_points_per_task, slot=0, shift=1):
     train_x, train_y, test_x, test_y = cross_val_data(data_x, data_y, num_points_per_task, shift=shift)
 
-    if model == "dnn":
+    if model == "dnn_contrast-4":
         config = tf.compat.v1.ConfigProto()
         config.gpu_options.allow_growth = True
         sess = tf.compat.v1.Session(config=config)
@@ -258,7 +295,7 @@ def run_parallel_exp(data_x, data_y, n_trees, model, num_points_per_task, slot=0
 
 #%%
 ### MAIN HYPERPARAMS ###
-model = "dnn"
+model = "dnn_contrast-4"
 num_points_per_task = 500
 ########################
 

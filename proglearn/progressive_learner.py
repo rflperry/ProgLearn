@@ -8,7 +8,9 @@ from .base import BaseClassificationProgressiveLearner, BaseProgressiveLearner
 
 class ProgressiveLearner(BaseProgressiveLearner):
     """
-    A class for progressive learning.
+    A (mostly) internal class for progressive learning. Most users who desire to
+    utilize ProgLearn should use the classes defined in {network, forest}.py instead
+    of this class.
 
     Parameters
     ----------
@@ -224,12 +226,12 @@ class ProgressiveLearner(BaseProgressiveLearner):
             ]
             if np.sum(split) > 1:
                 return [
-                    np.random.choice(ra, int(len(ra) * p), replace=True) for p in split
+                    np.random.choice(ra, int(len(ra) * p), replace=False) for p in split
                 ]
             else:
-                first_idx = np.random.choice(ra, int(len(ra) * split[0]), replace=True)
+                first_idx = np.random.choice(ra, int(len(ra) * split[0]), replace=False)
                 second_idx = np.random.choice(
-                    np.delete(ra, first_idx), int(len(ra) * split[1]), replace=True
+                    np.delete(ra, first_idx), int(len(ra) * split[1]), replace=False
                 )
                 return first_idx, second_idx
 
@@ -656,6 +658,34 @@ class ProgressiveLearner(BaseProgressiveLearner):
                 backward_task_ids=backward_task_ids,
             )
 
+        # train voters and decider from previous (and current) transformers to new task
+        for transformer_id in (
+            forward_transformer_ids
+            if forward_transformer_ids
+            else self.get_transformer_ids()
+        ):
+            self.set_voter(
+                transformer_id=transformer_id,
+                task_id=task_id,
+                voter_class=voter_class,
+                voter_kwargs=voter_kwargs,
+            )
+
+        # train decider of new task
+        if forward_transformer_ids:
+            if num_transformers == 0:
+                transformer_ids = forward_transformer_ids
+            else:
+                transformer_ids = np.concatenate([forward_transformer_ids, task_id])
+        else:
+            transformer_ids = self.get_transformer_ids()
+        self.set_decider(
+            task_id=task_id,
+            transformer_ids=transformer_ids,
+            decider_class=decider_class,
+            decider_kwargs=decider_kwargs,
+        )
+
         return self
 
     def predict(self, X, task_id, transformer_ids=None):
@@ -690,7 +720,9 @@ class ClassificationProgressiveLearner(
     BaseClassificationProgressiveLearner, ProgressiveLearner
 ):
     """
-    A class for progressive learning in the classification setting.
+    A (mostly) internal class for progressive learning in the classification
+    setting. Most users who desire to utilize ProgLearn should use the classes
+    defined in {network, forest}.py instead of this class.
     """
 
     def predict_proba(self, X, task_id, transformer_ids=None):

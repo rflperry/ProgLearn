@@ -83,10 +83,10 @@ def get_error_matrix(filename):
 ntrees = 10
 slots = 4
 task_num = 10
-shifts = 1
-total_alg = 8
-alg_name = ['L2N','L2F','Prog-NN', 'DF-CNN','LwF','EWC','O-EWC','SI']
-model_file = ['dnn0','fixed_uf10','Prog_NN','DF_CNN', 'LwF','EWC', 'Online_EWC', 'SI']
+shifts = 6
+total_alg = 3
+alg_name = ['L2N-Contrast', 'L2N','L2F','Prog-NN', 'DF-CNN','LwF','EWC','O-EWC','SI']
+model_file = ['dnn_contrast-40', 'dnn0withrep','fixed_uf10withrep','Prog_NN','DF_CNN', 'LwF','EWC', 'Online_EWC', 'SI']
 btes = [[] for i in range(total_alg)]
 ftes = [[] for i in range(total_alg)]
 tes = [[] for i in range(total_alg)]
@@ -103,7 +103,7 @@ for alg in range(total_alg):
 
     for slot in range(slots):
         for shift in range(shifts):
-            if alg < 2:
+            if alg < 3:
                 filename = 'result/result/'+model_file[alg]+'_'+str(shift+1)+'_'+str(slot)+'.pickle'
             else:
                 filename = 'benchmarking_algorthms_result/'+model_file[alg]+'_'+str(shift+1)+'_'+str(slot)+'.pickle'
@@ -123,7 +123,7 @@ for alg in range(total_alg):
     ftes[alg].extend(calc_mean_fte(fte_tmp,reps=reps))
 
 #%%
-te = {'L2N':np.zeros(10,dtype=float), 'L2F':np.zeros(10,dtype=float),'Prog-NN':np.zeros(10,dtype=float), 'DF-CNN':np.zeros(10,dtype=float), 'LwF':np.zeros(10,dtype=float),'EWC':np.zeros(10,dtype=float), 'Online EWC':np.zeros(10,dtype=float), 'SI':np.zeros(10,dtype=float)}
+te = {'L2N-Contrast':np.zeros(10,dtype=float), 'L2N':np.zeros(10,dtype=float), 'L2F':np.zeros(10,dtype=float)}#,'Prog-NN':np.zeros(10,dtype=float), 'DF-CNN':np.zeros(10,dtype=float), 'LwF':np.zeros(10,dtype=float),'EWC':np.zeros(10,dtype=float), 'Online EWC':np.zeros(10,dtype=float), 'SI':np.zeros(10,dtype=float)}
 
 for count,name in enumerate(te.keys()):
     for i in range(10):
@@ -132,16 +132,16 @@ for count,name in enumerate(te.keys()):
 df = pd.DataFrame.from_dict(te)
 df = pd.melt(df,var_name='Algorithms', value_name='Transfer Efficieny')
 
-mean_te = {'L2N':[np.mean(te['L2N'])],'L2F':[np.mean(te['L2F'])],
-            'Prog-NN':[np.mean(te['Prog-NN'])],'DF-CNN':[np.mean(te['DF-CNN'])], 
-           'LwF':[np.mean(te['LwF'])],'EWC':[np.mean(te['EWC'])], 
-           'Online EWC':[np.mean(te['Online EWC'])], 'SI':[np.mean(te['SI'])]
-           }
+mean_te = {'L2N-Contrast':[np.mean(te['L2N-Contrast'])], 'L2N':[np.mean(te['L2N'])],'L2F':[np.mean(te['L2F'])]}#,
+        #     'Prog-NN':[np.mean(te['Prog-NN'])],'DF-CNN':[np.mean(te['DF-CNN'])], 
+        #    'LwF':[np.mean(te['LwF'])],'EWC':[np.mean(te['EWC'])], 
+        #    'Online EWC':[np.mean(te['Online EWC'])], 'SI':[np.mean(te['SI'])]
+        #    }
 mean_df = pd.DataFrame.from_dict(mean_te)
 mean_df = pd.melt(mean_df,var_name='Algorithms', value_name='Transfer Efficieny')
 
 #%%
-clr = ["#00008B", "#e41a1c", "#a65628", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#CCCC00"]
+clr = ["#F83BEA", "#00008B", "#e41a1c", "#a65628", "#377eb8", "#4daf4a", "#984ea3", "#ff7f00", "#CCCC00"]
 c = sns.color_palette(clr, n_colors=len(clr))
 
 fontsize=24
@@ -207,9 +207,9 @@ ax[0][1].set_ylabel('Backward Transfer Efficiency', fontsize=fontsize)
 # ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
 # ax[1].legend(loc='upper left', fontsize=12)
 ax[0][1].legend(loc='center left', bbox_to_anchor=(1,0.5), fontsize=22)
-ax[0][1].set_yticks([.4,.6,.8,.9,1, 1.1,1.2])
+ax[0][1].set_yticks([.4,.6,.8,.9,1, 1.1, 1.25])
 ax[0][1].set_xticks(np.arange(1,11))
-ax[0][1].set_ylim(0.85, 1.19)
+ax[0][1].set_ylim(0.85, 1.26)
 ax[0][1].tick_params(labelsize=ticksize)
 #ax[0][1].grid(axis='x')
 
@@ -269,7 +269,7 @@ ax_.set_yticks([.4,.6,.8,1, 1.2,1.4])
 ax_.set_xlabel('Algorithms', fontsize=fontsize)
 ax_.set_ylabel('Final Transfer Efficiency', fontsize=fontsize)
 ax_.set_xticklabels(
-    ['L2N','L2F','Prog-NN','DF-CNN','LwF','EWC','O-EWC','SI'],
+    ['L2N-Contrast','L2N','L2F'],#,'Prog-NN','DF-CNN','LwF','EWC','O-EWC','SI'],
     fontsize=12,rotation=45,ha="right",rotation_mode='anchor'
     )
 
@@ -295,6 +295,6 @@ top_side.set_visible(False)
 
 plt.tight_layout()
 # lgd = fig.legend(algos, bbox_to_anchor=(1, 0.45), loc='center left', fontsize=18)
-plt.savefig('result/figs/benchmark.pdf', dpi=500)
+plt.savefig('result/figs/benchmark_contrast4.pdf', dpi=500)
 
 #%%
