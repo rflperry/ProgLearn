@@ -1,5 +1,5 @@
 """
-Main Author: Will LeVine 
+Main Author: Will LeVine
 Corresponding Email: levinewill@icloud.com
 """
 import numpy as np
@@ -82,6 +82,7 @@ class TreeClassificationVoter(BaseClassificationVoter):
             posteriors = self._finite_sample_correction(
                 posteriors, len(idxs_in_leaf), self.kappa
             )
+            # posteriors = (np.array(class_counts) + 1) / (np.sum(class_counts) + num_fit_classes)
             self.leaf_to_posterior_[leaf_id] = posteriors
 
         return self

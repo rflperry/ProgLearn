@@ -2,6 +2,7 @@ import numpy as np
 import seaborn as sns
 import matplotlib.pyplot as plt
 import os
+import pickle
 
 def plot_posterior(ax, algo, num_plotted_trials, X_eval):
     """

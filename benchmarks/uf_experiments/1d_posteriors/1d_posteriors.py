@@ -83,22 +83,22 @@ num_plotted_trials = 10  # the number of "fainter" lines to be displayed on the 
 
 # Algorithms used to produce figure 1
 algos = [
-    # {
-    #     "instance": RandomForestClassifier(n_estimators=n_estimators),
-    #     "label": "CART",
-    #     "title": "CART Forest",
-    #     "color": "#1b9e77",
-    # },
-    # {
-    #     "instance": CalibratedClassifierCV(
-    #         base_estimator=RandomForestClassifier(n_estimators=n_estimators // 5),
-    #         method="isotonic",
-    #         cv=5,
-    #     ),
-    #     "label": "IRF",
-    #     "title": "Isotonic Reg. Forest",
-    #     "color": "#fdae61",
-    # },
+    {
+        "instance": RandomForestClassifier(n_estimators=n_estimators),
+        "label": "CART",
+        "title": "CART Forest",
+        "color": "#1b9e77",
+    },
+    {
+        "instance": CalibratedClassifierCV(
+            base_estimator=RandomForestClassifier(n_estimators=n_estimators // 5),
+            method="isotonic",
+            cv=5,
+        ),
+        "label": "IRF",
+        "title": "Isotonic Reg. Forest",
+        "color": "#fdae61",
+    },
     {
         "instance": UncertaintyForest(
             n_estimators=n_estimators, tree_construction_proportion=0.4, kappa=3.0
