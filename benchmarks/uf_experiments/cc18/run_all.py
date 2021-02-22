@@ -16,7 +16,7 @@ n_estimators = 500
 uf_kappa = 1
 up_construction_prop = 0.5
 
-n_jobs = 10
+n_jobs = 30
 
 clfs = [
     (
@@ -52,7 +52,7 @@ clfs = [
 
 
 def train_test(X, y, task_name, nominal_indices):
-    cv = 5
+    cv = 10
     skf = StratifiedKFold(n_splits=cv, shuffle=True, random_state=0)
     n_samples, n_features = X.shape
     n_classes = len(np.unique(y))
@@ -115,7 +115,7 @@ def train_test(X, y, task_name, nominal_indices):
         
         results_dict[clf_name] = fold_probas
 
-    with open(f"./results/{task_name}_results_dict.pkl", "wb") as f:
+    with open(f"./results_cv10/{task_name}_results_dict.pkl", "wb") as f:
         pickle.dump(results_dict, f)
 
 
@@ -127,13 +127,13 @@ benchmark_suite = openml.study.get_suite("OpenML-CC18")  # obtain the benchmark 
 for task_id in benchmark_suite.tasks:  # iterate over all tasks
     task = openml.tasks.get_task(task_id)  # download the OpenML task
     task_name = task.get_dataset().name
-    if task_id < 146825:
-        print(f'Skipping {task_name} ({task_id})')
-        logging.info(f'Skipping {task_name} ({task_id})')
-        continue
-    else:
-        print(f'Running {task_name} ({task_id})')
-        logging.info(f'Running {task_name} ({task_id})')
+    # if task_id < 146825:
+    #     print(f'Skipping {task_name} ({task_id})')
+    #     logging.info(f'Skipping {task_name} ({task_id})')
+    #     continue
+    # else:
+    print(f'Running {task_name} ({task_id})')
+    logging.info(f'Running {task_name} ({task_id})')
 
     X, y = task.get_X_and_y()  # get the data
 
