@@ -68,7 +68,7 @@ def train_test(X, y, task_name, task_id, nominal_indices, args, clfs):
     # Do one hot encoding prior to cross validation
     nominal_transformer = Pipeline(
         steps=[
-            ("onehot", OneHotEncoder(handle_unknown="ignore")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse=False)),
             ("imputer", SimpleImputer(strategy="most_frequent")),
         ]
     )
@@ -164,11 +164,11 @@ def run_cc18(arg, clfs):
     for task_id in benchmark_suite.tasks:  # iterate over all tasks
         task = openml.tasks.get_task(task_id)  # download the OpenML task
         task_name = task.get_dataset().name
-        # if task_id < 146825:
-        #     print(f'Skipping {task_name} ({task_id})')
-        #     logging.info(f'Skipping {task_name} ({task_id})')
-        #     continue
-        # else:
+        if task_id < 29:
+            print(f'Skipping {task_name} ({task_id})')
+            logging.info(f'Skipping {task_name} ({task_id})')
+            continue
+
         print(f"{args.mode} {task_name} ({task_id})")
         logging.info(f"Running {task_name} ({task_id})")
 
