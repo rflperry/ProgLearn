@@ -16,10 +16,10 @@ def unpickle(file):
     return data
 
 
-ns = (np.asarray([10, 100, 1000, 10000]) / 2).astype(int)  # 2 classes
-d = 20
+ns = np.asarray([10, 100, 1000, 10000]) // 2 # 2 classes
+d = 200
 var = 1
-n_runs = 20
+n_runs = 10
 n_estimators = 100
 kappas = [0.01, 0.1, 1, 10]
 epsilon = 1
@@ -30,30 +30,30 @@ if tag != "" and tag[0] != "_":
     tag = "_" + tag
 
 clfs = [
-    (
-        f"UF (0.5-split, k={k})",
-        UncertaintyForest(
-            n_estimators=n_estimators, tree_construction_proportion=0.5, kappa=k
-        )
-    )
-    for k in kappas
+    # (
+    #     f"UF (k={k})",
+    #     UncertaintyForest(
+    #         n_estimators=n_estimators, tree_construction_proportion=0.5, kappa=k
+    #     )
+    # )
+    # for k in kappas
 ]
 
 clfs += [
-    # ('IRF', CalibratedClassifierCV(
-    #         base_estimator=RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs),
-    #         method="isotonic",
-    #         cv=5,
-    #     )),
-    # ('SigRF', CalibratedClassifierCV(
-    #         base_estimator=RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs),
-    #         method="sigmoid",
-    #         cv=5,
-    #     )),
-    ('UF (0.5-split, Uncorrected)', UncertaintyForest(
+    ('IRF', CalibratedClassifierCV(
+            base_estimator=RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs),
+            method="isotonic",
+            cv=5,
+        )),
+    ('SigRF', CalibratedClassifierCV(
+            base_estimator=RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs),
+            method="sigmoid",
+            cv=5,
+        )),
+    ('UF (Uncorrected)', UncertaintyForest(
             n_estimators=n_estimators, tree_construction_proportion=0.5
         )),
-    # ("RF", RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs))
+    ("RF", RandomForestClassifier(n_estimators=n_estimators, n_jobs=n_jobs))
 ]
 
 

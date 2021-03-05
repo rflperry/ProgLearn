@@ -1,9 +1,12 @@
 from proglearn import UncertaintyForest
+import numpy as np
 
-X = [[1, 2, 3, 4], [1, 2, 3, 4]]*4
-y = [0, 1] * 4
+X = np.random.normal(0, 1, (100, 4))
+y = (X[:, 0] > 0).astype(int)
 
+print(y)
 uf = UncertaintyForest()
 uf.fit(X, y)
+print(uf.predict(X))
 
 print('done')

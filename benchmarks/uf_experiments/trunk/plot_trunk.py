@@ -12,24 +12,23 @@ def unpickle(file):
         data = pickle.load(f, encoding='bytes')
     return data
 
-score = 'accuracy' #'mse', 'diff', 'accuracy', 'brier'
+score = 'mse' #'mse', 'diff', 'accuracy', 'brier'
 tag = '_trunk'
-bier=False
 
 data_dir = f'./results_vs_n/'
 
-d = 20
+d = 200
 epsilon = 1
 
 colors = {
-    'UF (0.5-split, k=0.01)': '#deebf7',
-    'UF (0.5-split, k=0.1)': '#c6dbef',
+    'UF (k=0.01)': '#deebf7',
+    'UF (k=0.1)': '#c6dbef',
     # 'UF (k=0.5)': '#9ecae1',
-    'UF (0.5-split, k=1)': '#6baed6',
+    'UF (k=1)': '#6baed6',
     # 'UF (k=5)': '#4292c6',
-    'UF (0.5-split, k=10)': '#2171b5',
+    'UF (k=10)': '#2171b5',
     # '#08519c',
-    'UF (0.5-split, Uncorrected)': '#fdbf6f',
+    'UF (Uncorrected)': '#fdbf6f',
     'SigRF': '#4daf4a',
     'IRF': '#ff7f00',
     'RF': '#a65628',
@@ -68,7 +67,7 @@ f, ax = plt.subplots(1, 1, figsize=(8, 5))
 
 for f in os.listdir(data_dir):
     data = unpickle(data_dir + f)
-    if f.endswith(f'{epsilon}-{d}' + tag + '.pickle') and not (f.startswith('UF (k') or f.startswith('UF (U')): # check data and experiment
+    if f.endswith(f'{epsilon}-{d}' + tag + '.pickle'):# and not (f.startswith('UF (k') or f.startswith('UF (U')): # check data and experiment
         ax = plot(ax, data, colors[data['algo']], score=score)
         # if f.startswith(f'UF (k'): # Varying kappa have specific colors
         #     ax = plot(ax, data, kappa_colors.pop(), mse=mse)

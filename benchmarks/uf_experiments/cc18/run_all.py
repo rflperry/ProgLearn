@@ -3,6 +3,7 @@ import openml
 import pickle
 import logging
 import time
+from tqdm import tqdm
 import os
 
 from sklearn.ensemble import RandomForestClassifier
@@ -32,10 +33,13 @@ def _check_nested_equality(lst1, lst2):
 
 def train_test(X, y, task_name, task_id, nominal_indices, args, clfs):
     save_path = f"./results_cv{args.cv}/{task_name}_results_dict.pkl"
-    if args.mode == "APPEND":
+    if args.mode == "OVERWRITE":
         if not os.path.isfile(save_path):
-            logging.info(f"APPEND MODE: Skipping {task_name}")
+            logging.info(f"OVERWRITE MODE: Skipping {task_name} (doesn't  exist)")
             return
+    if args.mode == 'APPEND' and os.path.isfile(save_path):
+        logging.info(f"APPEND MODE: Skipping {task_name} (already exists)")
+        return
 
     # Set up Cross validation
 
@@ -116,8 +120,8 @@ def train_test(X, y, task_name, task_id, nominal_indices, args, clfs):
         results_dict[clf_name] = fold_probas
 
     # If existing data, load and append to. Else save
-    if os.path.isfile(save_path):
-        logging.info(f"Existing data for {task_name} ({task_id}), appending")
+    if os.path.isfile(save_path) and args.mode == 'OVERWRITE':
+        logging.info(f"OVERWRITING {task_name} ({task_id})")
         with open(save_path, "rb") as f:
             prior_results = pickle.load(f)
 
@@ -161,10 +165,10 @@ def run_cc18(arg, clfs):
         "OpenML-CC18"
     )  # obtain the benchmark suite
 
-    for task_id in benchmark_suite.tasks:  # iterate over all tasks
+    for task_id in tqdm(benchmark_suite.tasks):  # iterate over all tasks
         task = openml.tasks.get_task(task_id)  # download the OpenML task
         task_name = task.get_dataset().name
-        if task_id < 29:
+        if args.start_id is not None and task_id < args.start_id:
             print(f'Skipping {task_name} ({task_id})')
             logging.info(f'Skipping {task_name} ({task_id})')
             continue
@@ -188,12 +192,13 @@ def run_cc18(arg, clfs):
 
 parser = argparse.ArgumentParser(description="Run CC18 dataset.")
 
-parser.add_argument("--mode", action="store", default="CREATE", choices=["APPEND", "CREATE"])
+parser.add_argument("--mode", action="store", default="CREATE", choices=["OVERWRITE", "CREATE", "APPEND"])
 parser.add_argument("--cv", action="store", type=int, default=10)
 parser.add_argument("--n_estimators", action="store", type=int, default=500)
 parser.add_argument("--n_jobs", action="store", type=int, default=40)
 parser.add_argument("--uf_kappa", action="store", type=float, default=1)
 parser.add_argument("--uf_construction_prop", action="store", type=float, default=0.5)
+parser.add_argument("--start_id", action="store", type=int, default=None)
 
 args = parser.parse_args()
 

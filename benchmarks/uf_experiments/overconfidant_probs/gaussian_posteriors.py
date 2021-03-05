@@ -17,16 +17,17 @@ from datasets import (
 
 # %%
 n = 100
-d = 20
+d = 2
 var = 1
 n_runs = 5
 n_estimators = 100
 kappas = [0.01, 0.1, 0.5, 1, 5]
-epsilons = [1]# np.linspace(0, 2, 9)
+epsilons = np.linspace(0, 2, 9)
 n_jobs = 40
 
 n_gaussians = 2
-tag = 'oblique'
+tag = ''
+regress_probs = False
 
 clfs = [
     (
@@ -79,12 +80,15 @@ for name, clf in clfs:
             # elif n_gaussians == 3:
             #     sample_func = sample_3gaussians
 
-            X_train, y_train, probs = sample_func(
+            X_train, y_train, probs_train = sample_func(
                 n, epsilon, d, var, calculate_prob=True
             )
-            X_test, y_test, probs = sample_func(n, epsilon, d, var, calculate_prob=True)
+            X_test, y_test, probs_test = sample_func(n, epsilon, d, var, calculate_prob=True)
 
-            clf.fit(X_train, y_train)
+            if regress_probs:
+                clf.fit(X_train, probs_train[:, 1])
+            else:
+                clf.fit(X_train, y_train)
             y_hat_probs = clf.predict_proba(X_test)
 
             y.append(y_test)
@@ -97,6 +101,8 @@ for name, clf in clfs:
             
     if tag != '':
         tag = '_' + tag
+    if regress_probs:
+        tag += '_regression'
     with open(
         f"./results_vs_epsilon/{name}_{n}x{d}{tag}.pickle", "wb"
     ) as f:
