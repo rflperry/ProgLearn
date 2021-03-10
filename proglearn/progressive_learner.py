@@ -565,23 +565,15 @@ class ProgressiveLearner(BaseProgressiveLearner):
                 voter_data_idx=voter_data_idx,
             )
 
-        # Voter and decider helper function
-        def _train_voters_deciders(existing_task_id):
-            self.set_voter(transformer_id=transformer_id,
-                            task_id=existing_task_id)
+        # train voters and deciders from new transformer to previous tasks
+        for existing_task_id in np.intersect1d(backward_task_ids, self.get_task_ids()):
+            self.set_voter(transformer_id=transformer_id, task_id=existing_task_id)
             self.set_decider(
                 task_id=existing_task_id,
                 transformer_ids=list(
-                    self.task_id_to_transformer_id_to_voters[existing_task_id].keys(
-                    )
+                    self.task_id_to_transformer_id_to_voters[existing_task_id].keys()
                 ),
             )
-        
-        # train voters and deciders from new transformer to previous tasks
-        Parallel(n_jobs=self.n_jobs)(
-            delayed(_train_voters_deciders)
-            (existing_task_id) for existing_task_id in np.intersect1d(backward_task_ids, self.get_task_ids())
-        )   
 
         return self
 

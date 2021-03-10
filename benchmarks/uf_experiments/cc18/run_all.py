@@ -66,14 +66,17 @@ def train_test(X, y, task_name, task_id, nominal_indices, args, clfs):
         },
     }
 
+    # Get numeric indices first
     numeric_indices = np.delete(np.arange(X.shape[1]), nominal_indices)
+
+    # Numeric Preprocessing
     numeric_transformer = SimpleImputer(strategy="median")
 
-    # Do one hot encoding prior to cross validation
+    # Nominal preprocessing
     nominal_transformer = Pipeline(
         steps=[
-            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse=False)),
             ("imputer", SimpleImputer(strategy="most_frequent")),
+            ("onehot", OneHotEncoder(handle_unknown="ignore", sparse=False)),
         ]
     )
 
@@ -91,8 +94,6 @@ def train_test(X, y, task_name, task_id, nominal_indices, args, clfs):
     # Store training indices (random state insures consistent across clfs)
     for train_index, test_index in skf.split(X, y):
         results_dict["test_indices"].append(test_index)
-
-    # X = OneHotEncoder(drop='if_binary', sparse=False).fit_transform(X)
 
     for clf_name, clf in clfs:
         pipeline = Pipeline(steps=[("Preprocessor", preprocessor), ("Estimator", clf)])
