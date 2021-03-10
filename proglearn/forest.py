@@ -184,7 +184,7 @@ class LifelongClassificationForest(ClassificationProgressiveLearner):
                 0,
             ],
             num_transformers=n_estimators,
-            transformer_kwargs=transformer_kwargs,
+            transformer_kwargs={"kwargs": {"max_depth": max_depth}},
             voter_kwargs={
                 "classes": np.unique(y),
                 "kappa": kappa,
