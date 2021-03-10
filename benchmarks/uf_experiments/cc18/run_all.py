@@ -198,8 +198,9 @@ parser.add_argument("--n_estimators", action="store", type=int, default=500)
 parser.add_argument("--n_jobs", action="store", type=int, default=1)
 parser.add_argument("--uf_kappa", action="store", type=float, default=1)
 parser.add_argument("--uf_construction_prop", action="store", type=float, default=0.5)
-parser.add_argument("--uf_max_samples", action="store", type=float, default=0.5)
-parser.add_argument("--uf_poisson", action="store_false", default=True)
+parser.add_argument("--uf_max_samples", action="store", type=float, default=1.0)
+parser.add_argument("--max_features", action="store", default=None, help="Either an integer, float, or string in {'sqrt', 'log2'}. Default uses all features.")
+parser.add_argument("--uf_poisson", action="store_true", default=False)
 parser.add_argument("--start_id", action="store", type=int, default=None)
 
 args = parser.parse_args()
@@ -209,7 +210,9 @@ clfs = [
         "IRF",
         CalibratedClassifierCV(
             base_estimator=RandomForestClassifier(
-                n_estimators=args.n_estimators // 5, n_jobs=args.n_jobs
+                n_estimators=args.n_estimators // 5,
+                max_features=args.max_features,
+                n_jobs=args.n_jobs
             ),
             method="isotonic",
             cv=5,
@@ -219,7 +222,9 @@ clfs = [
         "SigRF",
         CalibratedClassifierCV(
             base_estimator=RandomForestClassifier(
-                n_estimators=args.n_estimators // 5, n_jobs=args.n_jobs
+                n_estimators=args.n_estimators // 5,
+                max_features=args.max_features,
+                n_jobs=args.n_jobs
             ),
             method="sigmoid",
             cv=5,
@@ -232,11 +237,15 @@ clfs = [
             tree_construction_proportion=args.uf_construction_prop,
             kappa=args.uf_kappa,
             max_samples=args.uf_max_samples,
+            max_features=args.max_features,
             poisson_sampler=args.uf_poisson,
             n_jobs=args.n_jobs,
         ),
     ),
-    ("RF", RandomForestClassifier(n_estimators=args.n_estimators, n_jobs=args.n_jobs)),
+    ("RF", RandomForestClassifier(
+        n_estimators=args.n_estimators,
+        max_features=args.max_features,
+        n_jobs=args.n_jobs)),
 ]
 
 
