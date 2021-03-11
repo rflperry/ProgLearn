@@ -373,7 +373,9 @@ class ProgressiveLearner(BaseProgressiveLearner):
         else:
             transformers = [
                 self.transformer_id_to_transformers[transformer_id][bag_id]]
-        for transformer_num, transformer in enumerate(transformers):
+
+        # for transformer_num, transformer in enumerate(transformers):
+        def _parallel_helper(transformer_num, transformer, parallel=True):
             if transformer_id == task_id:
                 voter_data_idx = self.task_id_to_bag_id_to_voter_data_idx[task_id][
                     transformer_num
@@ -382,13 +384,28 @@ class ProgressiveLearner(BaseProgressiveLearner):
                 voter_data_idx = np.delete(
                     range(len(X)), self.task_id_to_decider_idx[task_id]
                 )
-            self._append_voter(
-                transformer_id,
-                task_id,
-                voter_class(**voter_kwargs).fit(
-                    transformer.transform(X[voter_data_idx]), y[voter_data_idx]
-                ),
-            )
+            voter = voter_class(**voter_kwargs).fit(
+                transformer.transform(X[voter_data_idx]), y[voter_data_idx])
+
+            if parallel:
+                return task_id, transformer_id, voter
+            else:
+                self._append_voter(
+                    transformer_id,
+                    task_id,
+                    voter_class(**voter_kwargs).fit(
+                        transformer.transform(X[voter_data_idx]), y[voter_data_idx]
+                    ),
+                )
+
+        # Parallel loop over voter training
+        # TODO Remove or fix. Tests show this causes drastic slowdown when in parallel
+        voter_info = Parallel(n_jobs=1)(
+            delayed(_parallel_helper)(transformer_num, transformer)
+            for transformer_num, transformer in enumerate(transformers)
+        )
+        for transformer_id, task_id, voter in voter_info:
+            self._append_voter(transformer_id, task_id, voter)
 
         self.task_id_to_voter_class[task_id] = voter_class
         self.task_id_to_voter_kwargs[task_id] = voter_kwargs
@@ -567,11 +584,13 @@ class ProgressiveLearner(BaseProgressiveLearner):
 
         # train voters and deciders from new transformer to previous tasks
         for existing_task_id in np.intersect1d(backward_task_ids, self.get_task_ids()):
-            self.set_voter(transformer_id=transformer_id, task_id=existing_task_id)
+            self.set_voter(transformer_id=transformer_id,
+                           task_id=existing_task_id)
             self.set_decider(
                 task_id=existing_task_id,
                 transformer_ids=list(
-                    self.task_id_to_transformer_id_to_voters[existing_task_id].keys()
+                    self.task_id_to_transformer_id_to_voters[existing_task_id].keys(
+                    )
                 ),
             )
 
