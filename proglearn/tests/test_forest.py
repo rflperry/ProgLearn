@@ -56,7 +56,7 @@ class TestLifelongClassificationForest:
 
 
 def test_uf_accuracy():
-    uf = UncertaintyForest()
+    uf = UncertaintyForest(n_jobs=2)
     X = np.ones((20, 4))
     X[10:] *= -1
     y = [0] * 10 + [1] * 10

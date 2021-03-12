@@ -173,6 +173,10 @@ def run_cc18(arg, clfs):
             print(f'Skipping {task_name} ({task_id})')
             logging.info(f'Skipping {task_name} ({task_id})')
             continue
+        if args.stop_id is not None and task_id >= args.stop_id:
+            print(f'Stopping at {task_name} ({task_id})')
+            logging.info(f'Stopping at {task_name} ({task_id})')
+            return
 
         print(f"{args.mode} {task_name} ({task_id})")
         logging.info(f"Running {task_name} ({task_id})")
@@ -197,12 +201,14 @@ parser.add_argument("--mode", action="store", default="CREATE", choices=["OVERWR
 parser.add_argument("--cv", action="store", type=int, default=10)
 parser.add_argument("--n_estimators", action="store", type=int, default=500)
 parser.add_argument("--n_jobs", action="store", type=int, default=1)
-parser.add_argument("--uf_kappa", action="store", type=float, default=1)
+parser.add_argument("--uf_kappa", action="store", type=float, default=None)
 parser.add_argument("--uf_construction_prop", action="store", type=float, default=0.5)
 parser.add_argument("--uf_max_samples", action="store", type=float, default=1.0)
 parser.add_argument("--max_features", action="store", default=None, help="Either an integer, float, or string in {'sqrt', 'log2'}. Default uses all features.")
 parser.add_argument("--uf_poisson", action="store_true", default=False)
 parser.add_argument("--start_id", action="store", type=int, default=None)
+parser.add_argument("--stop_id", action="store", type=int, default=None)
+
 
 args = parser.parse_args()
 
@@ -236,7 +242,7 @@ clfs = [
         UncertaintyForest(
             n_estimators=args.n_estimators,
             tree_construction_proportion=args.uf_construction_prop,
-            kappa=args.uf_kappa,
+            kappa=args.uf_kappa if args.uf_kappa is not None else np.inf,
             max_samples=args.uf_max_samples,
             max_features=args.max_features,
             poisson_sampler=args.uf_poisson,
